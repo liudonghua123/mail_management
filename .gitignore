@@ -8,3 +8,9 @@
 
 ## front
 **/*.lock
+
+# Java project files
+**/.classpath
+**/.factorypath
+**/.project
+**/.settings
