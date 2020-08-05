@@ -7,15 +7,15 @@ import { ACCESS_TOKEN, TENANT_ID } from "@/store/mutation-types"
 
 /**
  * 【指定 axios的 baseURL】
- * 如果手工指定 baseURL: '/jeecg-boot'
+ * 如果手工指定 baseURL: '/api'
  * 则映射后端域名，通过 vue.config.js
  * @type {*|string}
  */
-let apiBaseUrl = window._CONFIG['domianURL'] || "/jeecg-boot";
+let apiBaseUrl = window._CONFIG['domianURL'] || "/api";
 //console.log("apiBaseUrl= ",apiBaseUrl)
 // 创建 axios 实例
 const service = axios.create({
-  //baseURL: '/jeecg-boot',
+  //baseURL: '/api',
   baseURL: apiBaseUrl, // api base_url
   timeout: 9000 // 请求超时时间
 })
