@@ -1,17 +1,14 @@
 <template>
   <div class="footer">
     <div class="links">
-      <a href="http://www.jeecg.com" target="_blank">JEECG 首页</a>
-      <a href="https://github.com/zhangdaiscott/jeecg-boot" target="_blank">
-        <a-icon type="github"/>
-      </a>
-      <a href="https://ant.design/">Ant Design</a>
-      <a href="https://vuecomponent.github.io/ant-design-vue/docs/vue/introduce-cn/">Vue Antd</a>
+      <a href="https://mail.ynu.edu.cn/" target="_blank"><a-icon type="mail" theme="twoTone"/> 云大邮件系统</a>
+      <a href="https://www.ynu.edu.cn/" target="_blank"><a-icon type="heart" theme="twoTone" two-tone-color="#eb2f96" /> 云南大学</a>
+      <a href="http://www.itc.ynu.edu.cn/" target="_blank"><a-icon type="code" theme="twoTone"/> 云南大学信息技术中心</a>
     </div>
     <div class="copyright">
       Copyright
       <a-icon type="copyright"/>
-      2019 <span>JEECG开源社区 出品</span>
+      2020 <span>云南大学</span>
     </div>
   </div>
 </template>
