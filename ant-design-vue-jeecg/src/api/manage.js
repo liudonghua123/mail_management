@@ -12,29 +12,30 @@ const api = {
 export default api
 
 //post
-export function postAction(url,parameter) {
+export function postAction(url,data,params) {
   return axios({
-    url: url,
+    url,
     method:'post' ,
-    data: parameter
+    data,
+    params,
   })
 }
 
 //post method= {post | put}
-export function httpAction(url,parameter,method) {
+export function httpAction(url,data,method) {
   return axios({
     url: url,
     method:method ,
-    data: parameter
+    data: data
   })
 }
 
 //put
-export function putAction(url,parameter) {
+export function putAction(url,data) {
   return axios({
     url: url,
     method:'put',
-    data: parameter
+    data: data
   })
 }
 
