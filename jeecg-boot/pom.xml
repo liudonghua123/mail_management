@@ -64,6 +64,7 @@
 		<aliyun-java-sdk-dysmsapi.version>1.0.0</aliyun-java-sdk-dysmsapi.version>
 		<aliyun.oss.version>3.6.0</aliyun.oss.version>
 		<guava.version>26.0-jre</guava.version>
+		<jaxb.version>2.3.2</jaxb.version>
 	</properties>
 
 	<dependencies>
@@ -336,6 +337,21 @@
 			<groupId>com.xkcoding.justauth</groupId>
 			<artifactId>justauth-spring-boot-starter</artifactId>
 			<version>1.3.2</version>
+		</dependency>
+
+		<!--Fix java.lang.NoClassDefFoundError: javax/xml/bind/JAXBException -->
+		<!--https://stackoverflow.com/questions/43574426/how-to-resolve-java-lang-noclassdeffounderror-javax-xml-bind-jaxbexception-in-j-->
+		<!-- API, java.xml.bind module -->
+		<dependency>
+			<groupId>jakarta.xml.bind</groupId>
+			<artifactId>jakarta.xml.bind-api</artifactId>
+			<version>${jaxb.version}</version>
+		</dependency>
+		<!-- Runtime, com.sun.xml.bind module -->
+		<dependency>
+			<groupId>org.glassfish.jaxb</groupId>
+			<artifactId>jaxb-runtime</artifactId>
+			<version>${jaxb.version}</version>
 		</dependency>
 
 	</dependencies>
