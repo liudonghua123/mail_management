@@ -37,7 +37,7 @@ post_run() {
 }
 
 restart_server() {
-  service colorful-server restart
+  service $app_name restart
 }
 
 echo 'update_code ...' | tee -a /root/app/webhook.log
