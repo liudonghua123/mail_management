@@ -73,6 +73,14 @@
 					</execution>
 				</executions>
 			</plugin>
+			<!-- https://docs.spring.io/spring-boot/docs/current/reference/html/deployment.html#deployment-install -->
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<executable>true</executable>
+				</configuration>
+			</plugin>			
 		</plugins>
 	</build>
 </project>
