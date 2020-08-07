@@ -14,3 +14,5 @@
 **/.factorypath
 **/.project
 **/.settings
+
+jeecg-boot/jeecg-boot-module-app/src/main/resources/application-dev.yml
