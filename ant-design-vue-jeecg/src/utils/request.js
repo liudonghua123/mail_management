@@ -17,7 +17,7 @@ let apiBaseUrl = window._CONFIG['domianURL'] || "/api";
 const service = axios.create({
   //baseURL: '/api',
   baseURL: apiBaseUrl, // api base_url
-  timeout: 9000 // 请求超时时间
+  timeout: 60000 // 请求超时时间
 })
 
 const err = (error) => {
