@@ -51,6 +51,7 @@ import java.net.Socket;
 import tebie.applib.api.APIContext;
 import tebie.applib.api.IClient;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.util.StringUtils;
 
 /**
  * @Description: 邮箱用户
@@ -379,10 +380,18 @@ public class MailUserController extends JeecgController<MailUser, IMailUserServi
 				// cosId 服务等级标识，缺省服务为"1"
 				// userStatus 用户状态，正常为"0"，停用为"1"，锁定为"4"
 				String domainName = type.equals("0") ? "ynu.edu.cn" : "mail.ynu.edu.cn";
-				String[] attrNames = new String[] {"domain_name", "cos_id", "user_status", "a_delta",
+				String[] attrNames = new String[] {"domain_name", "password", "cos_id", "user_status", "a_delta",
 						"true_name", "mobile_number", "gender", "address", "zipcode", "homepage"};
-				String[] attrValues = new String[] {domainName, "1", "0", "0", mailUser.getName(),
-						mailUser.getPhone(), mailUser.getGender(), mailUser.getCardIdNum(), mailUser.getId(),
+				String cardIdNum = mailUser.getCardIdNum();
+				// 如果证件号为空或者证件号长度小于6（设置初始密码为证件号后六位,并且转换为小写）
+				if(StringUtils.isEmpty(cardIdNum) || cardIdNum.length() < 6) {
+					log.warn("创建 {} 邮箱账号失败，原始证件号是 {} 不满足预设条件", userAtDomain, cardIdNum);
+					failedUsers.add(mailUser);
+					continue;
+				}
+				String password = cardIdNum.substring(cardIdNum.length() - 6).toLowerCase();
+				String[] attrValues = new String[] {domainName, password, "1", "0", "0", mailUser.getName(),
+						mailUser.getPhone(), mailUser.getGender(), cardIdNum, mailUser.getId(),
 						mailUser.getDepName()};
 				APIContext ret =
 						client.createUser("1", "a", mailUser.getId(), Utils.encode(attrNames, attrValues));
