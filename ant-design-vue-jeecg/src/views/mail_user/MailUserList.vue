@@ -276,6 +276,7 @@ export default {
       },
       dictOptions: {},
       type: '',
+      diffData: [],
     }
   },
   created() {},
@@ -285,6 +286,19 @@ export default {
     },
   },
   methods: {
+    handleTableChange(pagination, filters, sorter) {
+      if (Object.keys(sorter).length > 0) {
+        this.isorter.column = sorter.field;
+        this.isorter.order = "ascend" == sorter.order ? "asc" : "desc"
+      }
+      this.ipagination = pagination;
+      if(this.type == '') {
+        return this.loadData();
+      }
+      // 本地分页
+      console.info({pagination, filters, sorter})
+      this.dataSource = this.diffData.slice((pagination.current - 1) * pagination.pageSize, pagination.current * pagination.pageSize)
+    },
     loadData(arg) {
       if (!this.url.list) {
         this.$message.error('请设置url.list属性!')
@@ -330,10 +344,12 @@ export default {
       getAction(this.url.diffUrl, { type }).then((res) => {
         this.loading = false
         if (res.success) {
+          console.info('handleDiff res.success')
           this.$message.success(res.message)
-          this.dataSource = res.result
+          this.diffData = res.result
+          this.dataSource = res.result.slice(0, 10)
           this.ipagination.total = res.result.length
-          this.ipagination.pageSize = 10000
+          this.ipagination.pageSize = 10
         } else {
           this.$message.error(res.message)
         }
