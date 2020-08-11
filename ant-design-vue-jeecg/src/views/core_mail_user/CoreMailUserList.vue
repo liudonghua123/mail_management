@@ -87,6 +87,20 @@
       <div class="ant-alert ant-alert-info" style="margin-bottom: 16px;">
         <i class="anticon anticon-info-circle ant-alert-icon"></i> 已选择 <a style="font-weight: 600">{{ selectedRowKeys.length }}</a>项
         <a style="margin-left: 24px" @click="onClearSelected">清空</a>
+        <a-popover title="自定义列" trigger="click" placement="leftBottom">
+          <template slot="content">
+            <a-checkbox-group @change="onColSettingsChange" v-model="settingColumns" :defaultValue="settingColumns">
+              <a-row>
+                <template v-for="(item,index) in defColumns">
+                  <template v-if="item.key!='rowIndex'&& item.dataIndex!='action'">
+                      <a-col :span="12"><a-checkbox :value="item.dataIndex">{{ item.title }}</a-checkbox></a-col>
+                  </template>
+                </template>
+              </a-row>
+            </a-checkbox-group>
+          </template>
+          <a><a-icon type="setting" />自定义列</a>
+        </a-popover>
       </div>
 
       <a-table
@@ -151,12 +165,14 @@
 
 <script>
 
+  import Vue from 'vue'
   import '@/assets/less/TableExpand.less'
   import { mixinDevice } from '@/utils/mixin'
   import { JeecgListMixin } from '@/mixins/JeecgListMixin'
   import CoreMailUserModal from './modules/CoreMailUserModal'
   import JDictSelectTag from '@/components/dict/JDictSelectTag.vue'
   import {filterMultiDictText} from '@/components/dict/JDictSelectUtil'
+  import { getAction, postAction, putAction, deleteAction, downFile, getFileAccessHttpUrl } from '@/api/manage'
 
   export default {
     name: 'CoreMailUserList',
@@ -167,9 +183,77 @@
     },
     data () {
       return {
-        description: 'coremail用户管理页面',
+        description: 'coremail用户管理页面', 
+        //表头
+        columns:[
+          {
+            title: '#',
+            dataIndex: '',
+            key:'rowIndex',
+            width:60,
+            align:"center",
+            customRender:function (t,r,index) {
+              return parseInt(index)+1;
+            }
+          },
+          {
+            title:'服务等级',
+            align:"center",
+            dataIndex: 'cosId'
+          },
+          {
+            title:'用户状态',
+            align:"center",
+            dataIndex: 'userStatus_dictText'
+          },
+          {
+            title:'域名',
+            align:"center",
+            dataIndex: 'domainName_dictText'
+          },
+          {
+            title:'真实姓名',
+            align:"center",
+            dataIndex: 'trueName'
+          },
+          {
+            title:'昵称',
+            align:"center",
+            dataIndex: 'nickName'
+          },
+          {
+            title:'手机号码',
+            align:"center",
+            dataIndex: 'mobileNumber'
+          },
+          {
+            title:'身份证号',
+            align:"center",
+            dataIndex: 'address'
+          },
+          {
+            title:'工号(学号)',
+            align:"center",
+            dataIndex: 'zipcode'
+          },
+          {
+            title:'学院(及专业)',
+            align:"center",
+            dataIndex: 'homepage'
+          },
+          {
+            title: '操作',
+            dataIndex: 'action',
+            align:"center",
+            fixed:"right",
+            width:147,
+            scopedSlots: { customRender: 'action' }
+          }
+        ],
+        //列设置
+        settingColumns:[],
         // 表头
-        columns: [
+        defColumns: [
           {
             title: '#',
             dataIndex: '',
@@ -393,6 +477,7 @@
       }
     },
     created() {
+      this.initColumns();
     },
     computed: {
       importExcelUrl: function(){
@@ -413,6 +498,49 @@
         })
       },
       initDictConfig(){
+      },
+      //列设置更改事件
+      onColSettingsChange (checkedValues) {
+        var key = this.$route.name+":colsettings";
+        Vue.ls.set(key, checkedValues, 7 * 24 * 60 * 60 * 1000)
+        this.settingColumns = checkedValues;
+        const cols = this.defColumns.filter(item => {
+          if(item.key =='rowIndex'|| item.dataIndex=='action'){
+            return true
+          }
+          if (this.settingColumns.includes(item.dataIndex)) {
+            return true
+          }
+          return false
+        })
+        this.columns =  cols;
+      },
+      initColumns(){
+        //权限过滤（列权限控制时打开，修改第二个参数为授权码前缀）
+        //this.defColumns = colAuthFilter(this.defColumns,'testdemo:');
+
+        var key = this.$route.name+":colsettings";
+        let colSettings= Vue.ls.get(key);
+        if(colSettings==null||colSettings==undefined){
+          let allSettingColumns = [];
+          this.defColumns.forEach(function (item,i,array ) {
+            allSettingColumns.push(item.dataIndex);
+          })
+          this.settingColumns = allSettingColumns;
+          this.columns = this.defColumns;
+        }else{
+          this.settingColumns = colSettings;
+          const cols = this.defColumns.filter(item => {
+            if(item.key =='rowIndex'|| item.dataIndex=='action'){
+              return true;
+            }
+            if (colSettings.includes(item.dataIndex)) {
+              return true;
+            }
+            return false;
+          })
+          this.columns =  cols;
+        }
       }
     }
   }

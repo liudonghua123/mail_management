@@ -26,7 +26,7 @@ import lombok.experimental.Accessors;
 @Data
 @TableName("core_mail_user")
 @Accessors(chain = true)
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @ApiModel(value="core_mail_user对象", description="coremail用户")
 public class CoreMailUser implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -34,6 +34,7 @@ public class CoreMailUser implements Serializable {
 	/**主键*/
 	@TableId(type = IdType.ASSIGN_ID)
     @ApiModelProperty(value = "主键")
+    @EqualsAndHashCode.Include
     private java.lang.String id;
 	/**创建人*/
     @ApiModelProperty(value = "创建人")
@@ -111,7 +112,7 @@ public class CoreMailUser implements Serializable {
 	/**时区*/
 	@Excel(name = "时区", width = 15)
     @ApiModelProperty(value = "时区")
-    private java.lang.Integer timeZone;
+    private java.lang.String timeZone;
 	/**删除邮件后的操作*/
 	@Excel(name = "删除邮件后的操作", width = 15)
     @ApiModelProperty(value = "删除邮件后的操作")
@@ -210,4 +211,6 @@ public class CoreMailUser implements Serializable {
 	@Excel(name = "IP绑定", width = 15)
     @ApiModelProperty(value = "IP绑定")
     private java.lang.String loginIpRange;
+
+    
 }
