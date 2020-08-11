@@ -12,15 +12,16 @@ import java.util.stream.IntStream;
 public class Utils {
 
   public static String encode(Map<String, String> requestParams) throws Exception {
-    return requestParams.keySet().stream()
-        .map(key -> key + "=" + encodeValue(requestParams.get(key)))
+    return requestParams.entrySet().stream().filter(item -> item.getValue() != null)
+        .map(item -> item.getKey() + "=" + encodeValue(item.getValue()))
         .collect(Collectors.joining("&"));
   }
 
   public static String encode(String[] keys, String[] values) throws Exception {
-    return IntStream.range(0, keys.length)
-        .mapToObj(index -> String.format("%s=%s", keys[index], values[index]))
-        .collect(Collectors.joining("&"));
+    Map<String, String> requestParams =
+        IntStream.range(0, keys.length).mapToObj(index -> new String[] {keys[index], values[index]})
+            .filter(a -> a[1] != null).collect(Collectors.toMap(a -> a[0], a -> a[1]));
+    return encode(requestParams);
   }
 
   public static Map<String, String> decode(String searchParamString) {

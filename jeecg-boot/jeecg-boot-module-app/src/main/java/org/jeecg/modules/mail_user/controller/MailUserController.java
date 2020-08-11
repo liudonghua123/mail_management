@@ -380,7 +380,7 @@ public class MailUserController extends JeecgController<MailUser, IMailUserServi
 				// cosId 服务等级标识，缺省服务为"1"
 				// userStatus 用户状态，正常为"0"，停用为"1"，锁定为"4"
 				String domainName = type.equals("0") ? "ynu.edu.cn" : "mail.ynu.edu.cn";
-				String[] attrNames = new String[] {"domain_name", "password", "cos_id", "user_status", "a_delta",
+				String[] attrNames = new String[] {"domain_name", "password", "cos_id", "user_status", "quota_delta",
 						"true_name", "mobile_number", "gender", "address", "zipcode", "homepage"};
 				String cardIdNum = mailUser.getCardIdNum();
 				// 如果证件号为空或者证件号长度小于6（设置初始密码为证件号后六位,并且转换为小写）
@@ -393,8 +393,9 @@ public class MailUserController extends JeecgController<MailUser, IMailUserServi
 				String[] attrValues = new String[] {domainName, password, "1", "0", "0", mailUser.getName(),
 						mailUser.getPhone(), mailUser.getGender(), cardIdNum, mailUser.getId(),
 						mailUser.getDepName()};
+				String attrs = Utils.encode(attrNames, attrValues);
 				APIContext ret =
-						client.createUser("1", "a", mailUser.getId(), Utils.encode(attrNames, attrValues));
+						client.createUser("1", "a", mailUser.getId(), attrs);
 				if (ret.getRetCode() == 0) {
 					successUsers.add(mailUser);
 					log.info("创建 {} 邮箱账号成功！", userAtDomain);
