@@ -112,6 +112,20 @@
         <i class="anticon anticon-info-circle ant-alert-icon"></i> 已选择
         <a style="font-weight: 600">{{ selectedRowKeys.length }}</a>项
         <a style="margin-left: 24px" @click="onClearSelected">清空</a>
+        <a-popover title="自定义列" trigger="click" placement="leftBottom" style="float: right;margin: auto 10px;" >
+          <template slot="content">
+            <a-checkbox-group @change="onColSettingsChange" v-model="settingColumns" :defaultValue="settingColumns">
+              <a-row>
+                <template v-for="(item,index) in defColumns">
+                  <template v-if="item.key!='rowIndex'&& item.dataIndex!='action'">
+                      <a-col :span="12" :key="index"><a-checkbox :value="item.dataIndex">{{ item.title }}</a-checkbox></a-col>
+                  </template>
+                </template>
+              </a-row>
+            </a-checkbox-group>
+          </template>
+          <a><a-icon type="setting" />自定义列</a>
+        </a-popover>
       </div>
 
       <a-table
@@ -223,6 +237,54 @@ export default {
           dataIndex: 'name',
         },
         {
+          title: '部门名称',
+          align: 'center',
+          dataIndex: 'depName',
+        },
+        {
+          title: '证件号',
+          align: 'center',
+          dataIndex: 'cardIdNum',
+        },
+        {
+          title: '手机号',
+          align: 'center',
+          dataIndex: 'phone',
+        },
+        {
+          title: '操作',
+          dataIndex: 'action',
+          align: 'center',
+          fixed: 'right',
+          width: 147,
+          scopedSlots: { customRender: 'action' },
+        },
+      ],
+      //列设置
+      settingColumns:[],
+      // 表头
+      defColumns: [
+        {
+          title: '#',
+          dataIndex: '',
+          key: 'rowIndex',
+          width: 60,
+          align: 'center',
+          customRender: function (t, r, index) {
+            return parseInt(index) + 1
+          },
+        },
+        {
+          title: '学工号',
+          align: 'center',
+          dataIndex: 'id',
+        },
+        {
+          title: '姓名',
+          align: 'center',
+          dataIndex: 'name',
+        },
+        {
           title: '性别',
           align: 'center',
           dataIndex: 'gender_dictText',
@@ -279,7 +341,9 @@ export default {
       diffData: [],
     }
   },
-  created() {},
+  created() {
+    this.initColumns();
+  },
   computed: {
     importExcelUrl: function () {
       return `${window._CONFIG['domianURL']}/${this.url.importExcelUrl}`

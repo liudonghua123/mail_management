@@ -4,11 +4,15 @@ import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.math.BigDecimal;
+import com.alibaba.fastjson.annotation.JSONType;
+import com.alibaba.fastjson.PropertyNamingStrategy;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.jeecgframework.poi.excel.annotation.Excel;
 import org.jeecg.common.aspect.annotation.Dict;
@@ -28,6 +32,7 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @ApiModel(value="core_mail_user对象", description="coremail用户")
+@JSONType(naming = PropertyNamingStrategy.SnakeCase)
 public class CoreMailUser implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -38,22 +43,27 @@ public class CoreMailUser implements Serializable {
     private java.lang.String id;
 	/**创建人*/
     @ApiModelProperty(value = "创建人")
+    // @JsonProperty(access = Access.WRITE_ONLY)
     private java.lang.String createBy;
 	/**创建日期*/
-	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss",shape = JsonFormat.Shape.STRING)
     @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
     @ApiModelProperty(value = "创建日期")
+    // @JsonProperty(access = Access.WRITE_ONLY)
     private java.util.Date createTime;
 	/**更新人*/
     @ApiModelProperty(value = "更新人")
+    // @JsonProperty(access = Access.WRITE_ONLY)
     private java.lang.String updateBy;
 	/**更新日期*/
-	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd HH:mm:ss",shape = JsonFormat.Shape.STRING)
     @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss")
     @ApiModelProperty(value = "更新日期")
+    // @JsonProperty(access = Access.WRITE_ONLY)
     private java.util.Date updateTime;
 	/**所属部门*/
     @ApiModelProperty(value = "所属部门")
+    @JsonProperty(access = Access.WRITE_ONLY)
     private java.lang.String sysOrgCode;
 	/**服务等级*/
 	@Excel(name = "服务等级", width = 15)
@@ -83,7 +93,7 @@ public class CoreMailUser implements Serializable {
     private java.lang.Integer nfQuotaDelta;
 	/**用户过期日*/
 	@Excel(name = "用户过期日", width = 15, format = "yyyy-MM-dd")
-	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd")
+	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd",shape = JsonFormat.Shape.STRING)
     @DateTimeFormat(pattern="yyyy-MM-dd")
     @ApiModelProperty(value = "用户过期日")
     private java.util.Date userExpiryDate;
@@ -167,7 +177,7 @@ public class CoreMailUser implements Serializable {
     private java.lang.String city;
 	/**生日*/
 	@Excel(name = "生日", width = 15, format = "yyyy-MM-dd")
-	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd")
+	@JsonFormat(timezone = "GMT+8",pattern = "yyyy-MM-dd",shape = JsonFormat.Shape.STRING)
     @DateTimeFormat(pattern="yyyy-MM-dd")
     @ApiModelProperty(value = "生日")
     private java.util.Date birthday;

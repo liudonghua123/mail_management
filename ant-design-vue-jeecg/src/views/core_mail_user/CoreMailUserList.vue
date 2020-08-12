@@ -5,6 +5,11 @@
       <a-form layout="inline" @keyup.enter.native="searchQuery">
         <a-row :gutter="24">
           <a-col :xl="6" :lg="7" :md="8" :sm="24">
+            <a-form-item label="账号">
+              <a-input placeholder="请输入账号" v-model="queryParam.id"></a-input>
+            </a-form-item>
+          </a-col>
+          <a-col :xl="6" :lg="7" :md="8" :sm="24">
             <a-form-item label="用户状态">
               <j-dict-select-tag placeholder="请选择用户状态" v-model="queryParam.userStatus" dictCode="coremail_user_status"/>
             </a-form-item>
@@ -77,6 +82,9 @@
       <a-dropdown v-if="selectedRowKeys.length > 0">
         <a-menu slot="overlay">
           <a-menu-item key="1" @click="batchDel"><a-icon type="delete"/>删除</a-menu-item>
+          <a-menu-item key="1" @click="batchChangeAttr('user_status=0')"><a-icon type="update"/>启用</a-menu-item>
+          <a-menu-item key="1" @click="batchChangeAttr('user_status=1')"><a-icon type="update"/>停用</a-menu-item>
+          <a-menu-item key="1" @click="batchChangeAttr('user_status=4')"><a-icon type="update"/>锁定</a-menu-item>
         </a-menu>
         <a-button style="margin-left: 8px"> 批量操作 <a-icon type="down" /></a-button>
       </a-dropdown>
@@ -87,13 +95,13 @@
       <div class="ant-alert ant-alert-info" style="margin-bottom: 16px;">
         <i class="anticon anticon-info-circle ant-alert-icon"></i> 已选择 <a style="font-weight: 600">{{ selectedRowKeys.length }}</a>项
         <a style="margin-left: 24px" @click="onClearSelected">清空</a>
-        <a-popover title="自定义列" trigger="click" placement="leftBottom">
+        <a-popover title="自定义列" trigger="click" placement="leftBottom" style="float: right;margin: auto 10px;" >
           <template slot="content">
             <a-checkbox-group @change="onColSettingsChange" v-model="settingColumns" :defaultValue="settingColumns">
               <a-row>
                 <template v-for="(item,index) in defColumns">
                   <template v-if="item.key!='rowIndex'&& item.dataIndex!='action'">
-                      <a-col :span="12"><a-checkbox :value="item.dataIndex">{{ item.title }}</a-checkbox></a-col>
+                      <a-col :span="12" :key="index"><a-checkbox :value="item.dataIndex">{{ item.title }}</a-checkbox></a-col>
                   </template>
                 </template>
               </a-row>
@@ -197,6 +205,11 @@
             }
           },
           {
+            title:'账号',
+            align:"center",
+            dataIndex: 'id'
+          },
+          {
             title:'服务等级',
             align:"center",
             dataIndex: 'cosId'
@@ -265,14 +278,9 @@
             }
           },
           {
-            title:'服务等级',
+            title:'账号',
             align:"center",
-            dataIndex: 'cosId'
-          },
-          {
-            title:'用户列表排序',
-            align:"center",
-            dataIndex: 'userListRank'
+            dataIndex: 'id'
           },
           {
             title:'用户状态',
@@ -306,6 +314,16 @@
             title:'用户部门id',
             align:"center",
             dataIndex: 'orgUnitId'
+          },
+          {
+            title:'服务等级',
+            align:"center",
+            dataIndex: 'cosId'
+          },
+          {
+            title:'用户列表排序',
+            align:"center",
+            dataIndex: 'userListRank'
           },
           {
             title:'密码',
@@ -471,6 +489,7 @@
           exportXlsUrl: "/core_mail_user/coreMailUser/exportXls",
           importExcelUrl: "core_mail_user/coreMailUser/importExcel",
           syncUrl: 'core_mail_user/coreMailUser/sync',
+          updateCoreMailUserBatch: 'core_mail_user/coreMailUser/updateCoreMailUserBatch',
           
         },
         dictOptions:{},
@@ -499,49 +518,36 @@
       },
       initDictConfig(){
       },
-      //列设置更改事件
-      onColSettingsChange (checkedValues) {
-        var key = this.$route.name+":colsettings";
-        Vue.ls.set(key, checkedValues, 7 * 24 * 60 * 60 * 1000)
-        this.settingColumns = checkedValues;
-        const cols = this.defColumns.filter(item => {
-          if(item.key =='rowIndex'|| item.dataIndex=='action'){
-            return true
+      batchChangeAttr: function (attrs) {
+        if (this.selectedRowKeys.length <= 0) {
+          this.$message.warning('请选择一条记录！');
+          return;
+        } else {
+          var ids = "";
+          for (var a = 0; a < this.selectedRowKeys.length; a++) {
+            ids += this.selectedRowKeys[a] + ",";
           }
-          if (this.settingColumns.includes(item.dataIndex)) {
-            return true
-          }
-          return false
-        })
-        this.columns =  cols;
-      },
-      initColumns(){
-        //权限过滤（列权限控制时打开，修改第二个参数为授权码前缀）
-        //this.defColumns = colAuthFilter(this.defColumns,'testdemo:');
-
-        var key = this.$route.name+":colsettings";
-        let colSettings= Vue.ls.get(key);
-        if(colSettings==null||colSettings==undefined){
-          let allSettingColumns = [];
-          this.defColumns.forEach(function (item,i,array ) {
-            allSettingColumns.push(item.dataIndex);
-          })
-          this.settingColumns = allSettingColumns;
-          this.columns = this.defColumns;
-        }else{
-          this.settingColumns = colSettings;
-          const cols = this.defColumns.filter(item => {
-            if(item.key =='rowIndex'|| item.dataIndex=='action'){
-              return true;
+          var that = this;
+          this.$confirm({
+            title: "确认修改用户状态",
+            content: "是否修改选中数据的用户状态?",
+            onOk: function () {
+              that.loading = true;
+              putAction(that.url.updateCoreMailUserBatch, null, {userAtDomains: ids, attrs}).then((res) => {
+                if (res.success) {
+                  that.$message.success(res.message);
+                  that.loadData();
+                  that.onClearSelected();
+                } else {
+                  that.$message.warning(res.message);
+                }
+              }).finally(() => {
+                that.loading = false;
+              });
             }
-            if (colSettings.includes(item.dataIndex)) {
-              return true;
-            }
-            return false;
-          })
-          this.columns =  cols;
+          });
         }
-      }
+      },
     }
   }
 </script>

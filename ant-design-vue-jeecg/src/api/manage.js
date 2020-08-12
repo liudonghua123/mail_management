@@ -31,11 +31,12 @@ export function httpAction(url,data,method) {
 }
 
 //put
-export function putAction(url,data) {
+export function putAction(url,data,params) {
   return axios({
-    url: url,
+    url,
     method:'put',
-    data: data
+    data,
+    params,
   })
 }
 

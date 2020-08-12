@@ -4,6 +4,11 @@
       <a-form :form="form" slot="detail">
         <a-row>
           <a-col :span="12">
+            <a-form-item label="账号" :labelCol="labelCol" :wrapperCol="wrapperCol">
+              <a-input-number disabled v-decorator="['id']" placeholder="请输入账号" style="width: 100%"/>
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
             <a-form-item label="服务等级" :labelCol="labelCol" :wrapperCol="wrapperCol">
               <a-input-number v-decorator="['cosId']" placeholder="请输入服务等级" style="width: 100%"/>
             </a-form-item>
@@ -20,7 +25,7 @@
           </a-col>
           <a-col :span="12">
             <a-form-item label="域名" :labelCol="labelCol" :wrapperCol="wrapperCol">
-              <j-dict-select-tag type="list" v-decorator="['domainName']" :trigger-change="true" dictCode="coremail_domain_name" placeholder="请选择域名"/>
+              <j-dict-select-tag disabled type="list" v-decorator="['domainName']" :trigger-change="true" dictCode="coremail_domain_name" placeholder="请选择域名"/>
             </a-form-item>
           </a-col>
           <a-col :span="12">
@@ -287,7 +292,7 @@
         this.model = Object.assign({}, record);
         this.visible = true;
         this.$nextTick(() => {
-          this.form.setFieldsValue(pick(this.model,'cosId','userListRank','userStatus','domainName','quotaDelta','nfQuotaDelta','userExpiryDate','orgUnitId','password','forwarddes','forwardactive','keeplocal','timeZone','afterdel','altEmail','pwdHintQuestion','pwdHintAnswer','trueName','nickName','mobileNumber','homePhone','companyPhone','faxNumber','gender','province','city','birthday','address','zipcode','homepage','country','anniversary','regIp','duty','remarks','orgUnitFullname','loginIpRange'))
+          this.form.setFieldsValue({... pick(this.model,'id', 'cosId','userListRank','userStatus','domainName','quotaDelta','nfQuotaDelta','userExpiryDate','orgUnitId','password','forwarddes','forwardactive','keeplocal','timeZone','afterdel','altEmail','pwdHintQuestion','pwdHintAnswer','trueName','nickName','mobileNumber','homePhone','companyPhone','faxNumber','gender','province','city','birthday','address','zipcode','homepage','country','anniversary','regIp','duty','remarks','orgUnitFullname','loginIpRange'), password: ''})
         })
       },
       //渲染流程表单数据

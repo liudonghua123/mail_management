@@ -1,19 +1,21 @@
 package org.jeecg.modules.mail_user.controller;
 
+import java.io.Serializable;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.jeecg.Utils;
 import org.jeecg.common.api.vo.Result;
+import org.jeecg.common.aspect.annotation.AutoLog;
+import org.jeecg.common.system.base.controller.JeecgController;
 import org.jeecg.common.system.query.QueryGenerator;
-import org.jeecg.common.util.oConvertUtils;
 import org.jeecg.modules.bks.entity.BksJbxx;
 import org.jeecg.modules.bks.service.IBksJbxxService;
 import org.jeecg.modules.jzg.entity.JzgJbxx;
@@ -22,36 +24,28 @@ import org.jeecg.modules.mail_user.entity.MailUser;
 import org.jeecg.modules.mail_user.service.IMailUserService;
 import org.jeecg.modules.yjs.entity.YjsJbxx;
 import org.jeecg.modules.yjs.service.IYjsJbxxService;
-
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import lombok.extern.slf4j.Slf4j;
-
-import org.jeecgframework.poi.excel.ExcelImportUtil;
-import org.jeecgframework.poi.excel.def.NormalExcelConstants;
-import org.jeecgframework.poi.excel.entity.ExportParams;
-import org.jeecgframework.poi.excel.entity.ImportParams;
-import org.jeecgframework.poi.excel.view.JeecgEntityExcelView;
-import org.jeecg.common.system.base.controller.JeecgController;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.MultipartHttpServletRequest;
-import org.springframework.web.servlet.ModelAndView;
-
-import cn.hutool.core.collection.CollectionUtil;
-
-import com.alibaba.fastjson.JSON;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import org.jeecg.common.aspect.annotation.AutoLog;
-import java.net.Socket;
-
-import tebie.applib.api.APIContext;
-import tebie.applib.api.IClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.ModelAndView;
+import cn.hutool.core.collection.CollectionUtil;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import tebie.applib.api.APIContext;
+import tebie.applib.api.IClient;
 
 /**
  * @Description: 邮箱用户
@@ -230,6 +224,15 @@ public class MailUserController extends JeecgController<MailUser, IMailUserServi
 		mailUserService.saveBatch(successUsers);
 		log.warn("保存MailUsers成功......");
 		return Result.ok(new CreateMailResponse(successUsers, failedUsers));
+	}
+	
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	static class CreateMailResponse implements Serializable {
+		private static final long serialVersionUID = 1L;
+		List<MailUser> successUsers;
+		List<MailUser> failedUsers;
 	}
 
 	/**

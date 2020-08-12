@@ -309,6 +309,48 @@ export const JeecgListMixin = {
       let url = getFileAccessHttpUrl(text)
       window.open(url);
     },
+    //列设置更改事件
+    onColSettingsChange (checkedValues) {
+      var key = this.$route.name+":colsettings";
+      Vue.ls.set(key, checkedValues, 7 * 24 * 60 * 60 * 1000)
+      this.settingColumns = checkedValues;
+      const cols = this.defColumns.filter(item => {
+        if(item.key =='rowIndex'|| item.dataIndex=='action'){
+          return true
+        }
+        if (this.settingColumns.includes(item.dataIndex)) {
+          return true
+        }
+        return false
+      })
+      this.columns =  cols;
+    },
+    initColumns(){
+      //权限过滤（列权限控制时打开，修改第二个参数为授权码前缀）
+      //this.defColumns = colAuthFilter(this.defColumns,'testdemo:');
+      var key = this.$route.name+":colsettings";
+      let colSettings= Vue.ls.get(key);
+      if(colSettings==null||colSettings==undefined){
+        let allSettingColumns = [];
+        this.defColumns.forEach(function (item,i,array ) {
+          allSettingColumns.push(item.dataIndex);
+        })
+        this.settingColumns = allSettingColumns;
+        this.columns = this.defColumns;
+      }else{
+        this.settingColumns = colSettings;
+        const cols = this.defColumns.filter(item => {
+          if(item.key =='rowIndex'|| item.dataIndex=='action'){
+            return true;
+          }
+          if (colSettings.includes(item.dataIndex)) {
+            return true;
+          }
+          return false;
+        })
+        this.columns =  cols;
+      }
+    },
   }
 
 }
