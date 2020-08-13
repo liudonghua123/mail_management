@@ -35,6 +35,7 @@ public class Utils {
 
   private static String encodeValue(String value) {
     try {
+      // 注：coremail中使用的编码是GBK，而不是UTF-8
       return URLEncoder.encode(value, "GBK");
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();
@@ -44,6 +45,7 @@ public class Utils {
 
   private static String decodeValue(String value) {
     try {
+      // 注：coremail中使用的编码是GBK，而不是UTF-8
       return URLDecoder.decode(value, "GBK");
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();

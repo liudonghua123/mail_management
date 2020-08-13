@@ -25,9 +25,11 @@ import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.aspect.annotation.AutoLog;
 import org.jeecg.common.system.base.controller.JeecgController;
 import org.jeecg.common.system.query.QueryGenerator;
+import org.jeecg.common.system.vo.DictModel;
 import org.jeecg.modules.core_mail_user.entity.CoreMailUser;
 import org.jeecg.modules.core_mail_user.service.ICoreMailUserService;
 import org.jeecg.modules.mail_user.entity.MailUser;
+import org.jeecg.modules.system.service.ISysDictService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -63,6 +65,8 @@ import tebie.applib.api.IClient;
 public class CoreMailUserController extends JeecgController<CoreMailUser, ICoreMailUserService> {
   @Autowired
   private ICoreMailUserService coreMailUserService;
+  @Autowired
+  private ISysDictService sysDictService;
 
 
   @Value("${coremail.endpointHost}")
@@ -100,24 +104,15 @@ public class CoreMailUserController extends JeecgController<CoreMailUser, ICoreM
   @ApiOperation(value = "coremail用户-同步coremail用户数据", notes = "coremail用户-同步coremail用户数据")
   @GetMapping(value = "/sync")
   public Result<?> sync() {
-    Map<String, String> orgs = new HashMap<>();
-    orgs.put("a", "云南大学教师");
-    orgs.put("b", "云南大学学生");
-    orgs.put("c", "云南大学校友");
-    // orgs.put("d","云南大学主节点");
-    orgs.put("e", "云南大学软件学院");
-    orgs.put("f", "无组织通讯录");
-    orgs.put("xxjszx", "信息技术中心");
-
-    Map<String, String> orgDomains = new HashMap<>();
-    orgDomains.put("a", "ynu.edu.cn");
-    orgDomains.put("b", "mail.ynu.edu.cn");
-    orgDomains.put("c", "alumnu.ynu.edu.cn");
-    // orgDomains.put("d","yn.edu.cn");
-    orgDomains.put("e", "sei.ynu.edu.cn");
-    orgDomains.put("f", "ynu.edu.cn");
-    orgDomains.put("xxjszx", "ynu.edu.cn");
-
+    List<DictModel> coremailOrgNames = sysDictService.queryDictItemsByCode("coremail_org_names");
+    List<DictModel> coremailOrgDomains =
+        sysDictService.queryDictItemsByCode("coremail_org_domains");
+    Map<String, String> orgs =
+        coremailOrgNames.stream().map(item -> new String[] {item.getValue(), item.getText()})
+            .collect(Collectors.toMap(item -> item[0], item -> item[1]));
+    Map<String, String> orgDomains =
+        coremailOrgDomains.stream().map(item -> new String[] {item.getValue(), item.getText()})
+            .collect(Collectors.toMap(item -> item[0], item -> item[1]));
     log.info("正在获取组织用户列表数据......");
     Map<String, Map<String, String>> allUserAttrs = new HashMap<>();
     for (Entry<String, String> item : orgs.entrySet()) {
@@ -202,7 +197,7 @@ public class CoreMailUserController extends JeecgController<CoreMailUser, ICoreM
     try {
       Socket socket = new Socket(endpointHost, endpointPort);
       client = APIContext.getClient(socket);
-      for(int i = 0; i < userAtDomainList.size(); i ++) {
+      for (int i = 0; i < userAtDomainList.size(); i++) {
         String userAtDomain = userAtDomainList.get(i);
         APIContext ret = client.changeAttrs(userAtDomain, attrs);
         if (ret.getRetCode() != APIContext.RC_NORMAL) {
@@ -213,13 +208,15 @@ public class CoreMailUserController extends JeecgController<CoreMailUser, ICoreM
         }
         log.info("批量更新邮箱账号 {} 成功！", userAtDomain);
         Map<String, String> newAttrs = getAttrs(userAtDomain);
-        CoreMailUser coreMailUser = JSON.parseObject(JSON.toJSONString(newAttrs), CoreMailUser.class);
+        CoreMailUser coreMailUser =
+            JSON.parseObject(JSON.toJSONString(newAttrs), CoreMailUser.class);
         coreMailUser.setId(userAtDomain);
         coreMailUsers.add(coreMailUser);
       }
       // 批量更新本地信息
       coreMailUserService.updateBatchById(coreMailUsers);
-      return Result.ok(String.format("批量更新邮箱账号 %s 成功！", userAtDomains), new BatchResponse<String>(successList, failedList));
+      return Result.ok(String.format("批量更新邮箱账号 %s 成功！", userAtDomains),
+          new BatchResponse<String>(successList, failedList));
     } catch (Exception e) {
       System.out.println(e);
     } finally {
@@ -353,15 +350,15 @@ public class CoreMailUserController extends JeecgController<CoreMailUser, ICoreM
       client = APIContext.getClient(socket);
       String userAtDomain = coreMailUser.getId();
       String id = userAtDomain.substring(0, userAtDomain.indexOf("@"));
-      Map<String,Object> attrMap = JSON.parseObject(JSON.toJSONStringWithDateFormat(coreMailUser, "yyyy-MM-dd"));
-      // remove non standard attrs
-      attrMap.remove("id");
-      attrMap.remove("create_by");
-      attrMap.remove("create_time");
-      attrMap.remove("update_by");
-      attrMap.remove("update_time");
-      attrMap.remove("sys_org_code");
-      attrMap.remove("domain_name");
+      // 这里的日期JSON序列化的时候不会参考Entity里的注解，无法正确处理
+      Map<String, Object> attrMap =
+          JSON.parseObject(JSON.toJSONStringWithDateFormat(coreMailUser, "yyyy-MM-dd"));
+      // 删除非coremail属性
+      String[] nonCoremailAttrs = new String[] {"id", "create_by", "create_time", "update_by",
+          "update_time", "sys_org_code"};
+      for (String nonCoremailAttr : nonCoremailAttrs) {
+        attrMap.remove(nonCoremailAttr);
+      }
       String attrs = Utils.encode(attrMap);
       log.info("添加 {} 邮箱账号 attrs {}", id, attrs);
       APIContext ret = client.createUser("1", "a", id, attrs);
@@ -369,8 +366,13 @@ public class CoreMailUserController extends JeecgController<CoreMailUser, ICoreM
         log.warn("添加邮箱账号 {} 失败，code: {}, msg: {}", id, ret.getRetCode(), ret.getErrorInfo());
         return Result.error(200, ret.getErrorInfo());
       }
+      // 重新获取coremail中的属性信息，转换为CoreMailUser，然后保存
+      Map<String, String> userAttrs = getAttrs(userAtDomain);
+      CoreMailUser newCoreMailUser =
+          JSON.parseObject(JSON.toJSONString(userAttrs), CoreMailUser.class);
+      newCoreMailUser.setId(userAtDomain);
       log.info("添加邮箱账号 {} 成功！", id);
-      coreMailUserService.save(coreMailUser);
+      coreMailUserService.save(newCoreMailUser);
       return Result.ok(String.format("添加邮箱账号 %s 成功！", id));
     } catch (Exception e) {
       System.out.println(e);
@@ -379,7 +381,7 @@ public class CoreMailUserController extends JeecgController<CoreMailUser, ICoreM
         client.close();
       }
     }
-		return Result.error(200, "");
+    return Result.error(200, "");
   }
 
   /**
@@ -397,24 +399,35 @@ public class CoreMailUserController extends JeecgController<CoreMailUser, ICoreM
       Socket socket = new Socket(endpointHost, endpointPort);
       client = APIContext.getClient(socket);
       String userAtDomain = coreMailUser.getId();
-      Map<String,Object> attrMap = JSON.parseObject(JSON.toJSONStringWithDateFormat(coreMailUser, "yyyy-MM-dd"));
-      // remove non standard attrs
-      attrMap.remove("id");
-      attrMap.remove("create_by");
-      attrMap.remove("create_time");
-      attrMap.remove("update_by");
-      attrMap.remove("update_time");
-      attrMap.remove("sys_org_code");
+      Map<String, Object> attrMap =
+          JSON.parseObject(JSON.toJSONStringWithDateFormat(coreMailUser, "yyyy-MM-dd"));
+      // 删除非coremail属性
+      String[] nonCoremailAttrs = new String[] {"id", "create_by", "create_time", "update_by",
+          "update_time", "sys_org_code"};
+      for (String nonCoremailAttr : nonCoremailAttrs) {
+        attrMap.remove(nonCoremailAttr);
+      }
+      // domain_name 属性只可读，不可写，不能在更新属性中
       attrMap.remove("domain_name");
+      // 如果密码字段为空，则不更新密码
+      if (attrMap.get("password").equals("")) {
+        attrMap.remove("password");
+      }
       String attrs = Utils.encode(attrMap);
       log.info("更新 {} 邮箱账号 attrs {}", userAtDomain, attrs);
       APIContext ret = client.changeAttrs(userAtDomain, attrs);
       if (ret.getRetCode() != APIContext.RC_NORMAL) {
-        log.warn("更新邮箱账号 {} 失败，code: {}, msg: {}", userAtDomain, ret.getRetCode(), ret.getErrorInfo());
+        log.warn("更新邮箱账号 {} 失败，code: {}, msg: {}", userAtDomain, ret.getRetCode(),
+            ret.getErrorInfo());
         return Result.error(200, ret.getErrorInfo());
       }
+      // 重新获取coremail中的属性信息，转换为CoreMailUser，然后更新
+      Map<String, String> userAttrs = getAttrs(userAtDomain);
+      CoreMailUser newCoreMailUser =
+          JSON.parseObject(JSON.toJSONString(userAttrs), CoreMailUser.class);
+      newCoreMailUser.setId(userAtDomain);
       log.info("更新邮箱账号 {} 成功！", userAtDomain);
-      coreMailUserService.updateById(coreMailUser);
+      coreMailUserService.updateById(newCoreMailUser);
       return Result.ok(String.format("更新邮箱账号 %s 成功！", userAtDomain));
     } catch (Exception e) {
       System.out.println(e);
@@ -423,7 +436,7 @@ public class CoreMailUserController extends JeecgController<CoreMailUser, ICoreM
         client.close();
       }
     }
-		return Result.error(200, "");
+    return Result.error(200, "");
   }
 
   /**
@@ -455,7 +468,7 @@ public class CoreMailUserController extends JeecgController<CoreMailUser, ICoreM
         client.close();
       }
     }
-		return Result.error(200, "");
+    return Result.error(200, "");
   }
 
   /**
@@ -495,7 +508,7 @@ public class CoreMailUserController extends JeecgController<CoreMailUser, ICoreM
         client.close();
       }
     }
-		return Result.error(200, "");
+    return Result.error(200, "");
   }
 
   @Data
