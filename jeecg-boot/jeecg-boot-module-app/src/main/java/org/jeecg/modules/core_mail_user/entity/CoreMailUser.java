@@ -98,7 +98,8 @@ public class CoreMailUser implements Serializable {
     @ApiModelProperty(value = "用户过期日")
     private java.util.Date userExpiryDate;
 	/**用户部门id*/
-	@Excel(name = "用户部门id", width = 15)
+	@Excel(name = "用户部门id", width = 15, dicCode = "coremail_org_names")
+	@Dict(dicCode = "coremail_org_names")
     @ApiModelProperty(value = "用户部门id")
     private java.lang.String orgUnitId;
 	/**密码*/

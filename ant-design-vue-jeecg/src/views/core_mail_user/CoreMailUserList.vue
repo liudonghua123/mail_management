@@ -311,9 +311,9 @@
             }
           },
           {
-            title:'用户部门id',
+            title:'邮箱组织',
             align:"center",
-            dataIndex: 'orgUnitId'
+            dataIndex: 'orgUnitId_dictText'
           },
           {
             title:'服务等级',
