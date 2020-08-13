@@ -1,16 +1,17 @@
 package org.jeecg.modules.mail_user.controller;
 
 import java.io.Serializable;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.jeecg.CoremailUtils;
 import org.jeecg.Utils;
 import org.jeecg.common.api.vo.Result;
 import org.jeecg.common.aspect.annotation.AutoLog;
@@ -45,7 +46,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import tebie.applib.api.APIContext;
-import tebie.applib.api.IClient;
 
 /**
  * @Description: 邮箱用户
@@ -66,6 +66,8 @@ public class MailUserController extends JeecgController<MailUser, IMailUserServi
 	private IYjsJbxxService yjsJbxxService;
 	@Autowired
 	private IJzgJbxxService jzgJbxxService;
+	@Autowired
+	private CoremailUtils coremailUtils;
 
 
 	@Value("${coremail.endpointHost}")
@@ -177,12 +179,14 @@ public class MailUserController extends JeecgController<MailUser, IMailUserServi
 
 	/**
 	 * 创建账号
+	 * 
+	 * @throws Exception
 	 */
 	@AutoLog(value = "邮箱用户-创建账号")
 	@ApiOperation(value = "邮箱用户-创建账号", notes = "邮箱用户-创建账号")
 	@PostMapping(value = "/createMailUser")
 	public Result<?> createMailUser(@RequestParam(name = "ids", required = true) String ids,
-			@RequestParam(name = "type", defaultValue = "1") String type) {
+			@RequestParam(name = "type", defaultValue = "1") String type) throws Exception {
 		List<String> idList = Arrays.asList(ids.split(","));
 		List<MailUser> mappedMailUsers = null;
 		// 教职工
@@ -225,7 +229,7 @@ public class MailUserController extends JeecgController<MailUser, IMailUserServi
 		log.warn("保存MailUsers成功......");
 		return Result.ok(new CreateMailResponse(successUsers, failedUsers));
 	}
-	
+
 	@Data
 	@NoArgsConstructor
 	@AllArgsConstructor
@@ -243,27 +247,11 @@ public class MailUserController extends JeecgController<MailUser, IMailUserServi
 	@GetMapping(value = "/mailUserAttrs")
 	public Result<?> mailUserAttrs(
 			@RequestParam(name = "userAtDomain", required = true) String userAtDomain) {
-		IClient client = null;
-		try {
-			Socket socket = new Socket(endpointHost, endpointPort);
-			client = APIContext.getClient(socket);
-			APIContext ret = client.getAttrs(userAtDomain,
-					"domain_name=&cos_id=&user_status=&user_expiry_date=&org_unit_id&true_name=&nick_name=&mobile_number=&home_phone=&company_phone=&fax_number=&gender=&province=&city=&birthday=&address=&zipcode=&homepage=");
-			if (ret.getRetCode() != APIContext.RC_NORMAL) {
-				log.warn("获取 {} 用户属性信息错误，code: {}, msg: {}", userAtDomain, ret.getRetCode(),
-						ret.getErrorInfo());
-				return Result.error(200, ret.getErrorInfo());
-			}
-			log.info("获取 {} 用户属性信息 {}！", userAtDomain, ret.getResult());
-			return Result.ok(Utils.decode(ret.getResult()));
-		} catch (Exception e) {
-			System.out.println(e);
-		} finally {
-			if (client != null) {
-				client.close();
-			}
+		Map<String, String> attrs = coremailUtils.getAttrs(userAtDomain);
+		if (attrs == null) {
+			return Result.error(200, String.format("获取 %s 用户属性信息错误", userAtDomain));
 		}
-		return Result.error(200, "");
+		return Result.ok(attrs);
 	}
 
 	/**
@@ -274,26 +262,14 @@ public class MailUserController extends JeecgController<MailUser, IMailUserServi
 	@DeleteMapping(value = "/deleteMailUser")
 	public Result<?> deleteMailUser(
 			@RequestParam(name = "userAtDomain", required = true) String userAtDomain) {
-		IClient client = null;
-		try {
-			Socket socket = new Socket(endpointHost, endpointPort);
-			client = APIContext.getClient(socket);
-			APIContext ret = client.deleteUser(userAtDomain);
-			if (ret.getRetCode() != APIContext.RC_NORMAL) {
-				log.warn("删除邮箱账号 {} 失败，code: {}, msg: {}", userAtDomain, ret.getRetCode(),
-						ret.getErrorInfo());
-				return Result.error(200, ret.getErrorInfo());
-			}
-			log.info("删除邮箱账号 {} 成功！", userAtDomain);
-			return Result.ok(String.format("删除邮箱账号 %s 成功！", userAtDomain));
-		} catch (Exception e) {
-			System.out.println(e);
-		} finally {
-			if (client != null) {
-				client.close();
-			}
+		APIContext ret = coremailUtils.deleteUser(userAtDomain);
+		if (ret.getRetCode() != APIContext.RC_NORMAL) {
+			log.warn("删除邮箱账号 {} 失败，code: {}, msg: {}", userAtDomain, ret.getRetCode(),
+					ret.getErrorInfo());
+			return Result.error(200, ret.getErrorInfo());
 		}
-		return Result.error(200, "");
+		log.info("删除邮箱账号 {} 成功！", userAtDomain);
+		return Result.ok(String.format("删除邮箱账号 %s 成功！", userAtDomain));
 	}
 
 	/**
@@ -305,26 +281,14 @@ public class MailUserController extends JeecgController<MailUser, IMailUserServi
 	public Result<?> updateMailUser(
 			@RequestParam(name = "userAtDomain", required = true) String userAtDomain,
 			@RequestParam(name = "attrs", required = true) String attrs) {
-		IClient client = null;
-		try {
-			Socket socket = new Socket(endpointHost, endpointPort);
-			client = APIContext.getClient(socket);
-			APIContext ret = client.changeAttrs(userAtDomain, attrs);
-			if (ret.getRetCode() != APIContext.RC_NORMAL) {
-				log.warn("更新邮箱账号 {} 失败，code: {}, msg: {}", userAtDomain, ret.getRetCode(),
-						ret.getErrorInfo());
-				return Result.error(200, ret.getErrorInfo());
-			}
-			log.info("更新邮箱账号 {} 成功！", userAtDomain);
-			return Result.ok(String.format("更新邮箱账号 %s 成功！", userAtDomain));
-		} catch (Exception e) {
-			System.out.println(e);
-		} finally {
-			if (client != null) {
-				client.close();
-			}
+		APIContext ret = coremailUtils.changeAttrs(userAtDomain, attrs);
+		if (ret.getRetCode() != APIContext.RC_NORMAL) {
+			log.warn("更新邮箱账号 {} 失败，code: {}, msg: {}", userAtDomain, ret.getRetCode(),
+					ret.getErrorInfo());
+			return Result.error(200, ret.getErrorInfo());
 		}
-		return Result.error(200, "");
+		log.info("更新邮箱账号 {} 成功！", userAtDomain);
+		return Result.ok(String.format("更新邮箱账号 %s 成功！", userAtDomain));
 	}
 
 	/**
@@ -363,56 +327,46 @@ public class MailUserController extends JeecgController<MailUser, IMailUserServi
 			quota_delta       = "邮箱附加容量"
 			user_expiry_date  = "到期日期"
 	 * </pre>
+	 * 
+	 * @throws Exception
 	 */
 	private void createMailUser(List<MailUser> mappedMailUsers, List<MailUser> successUsers,
-			List<MailUser> failedUsers, String type) {
-		IClient client = null;
-		try {
-			Socket socket = new Socket(endpointHost, endpointPort);
-			client = APIContext.getClient(socket);
-			for (MailUser mailUser : mappedMailUsers) {
-				String userAtDomain = String.format("%s@mail.ynu.edu.cn", mailUser.getId());
-				if (type.equals("0")) {
-					userAtDomain = String.format("%s@ynu.edu.cn", mailUser.getId());
-				}
-				// createUser(providerId, orgId, userId, attrs)
-				// providerId 固定为"1"
-				// orgId 组织标识
-				// userId 用户名
-				// domainName 域名
-				// cosId 服务等级标识，缺省服务为"1"
-				// userStatus 用户状态，正常为"0"，停用为"1"，锁定为"4"
-				String domainName = type.equals("0") ? "ynu.edu.cn" : "mail.ynu.edu.cn";
-				String[] attrNames = new String[] {"domain_name", "password", "cos_id", "user_status", "quota_delta",
-						"true_name", "mobile_number", "gender", "address", "zipcode", "homepage"};
-				String cardIdNum = mailUser.getCardIdNum();
-				// 如果证件号为空或者证件号长度小于6（设置初始密码为证件号后六位,并且转换为小写）
-				if(StringUtils.isEmpty(cardIdNum) || cardIdNum.length() < 6) {
-					log.warn("创建 {} 邮箱账号失败，原始证件号是 {} 不满足预设条件", userAtDomain, cardIdNum);
-					failedUsers.add(mailUser);
-					continue;
-				}
-				String password = cardIdNum.substring(cardIdNum.length() - 6).toLowerCase();
-				String[] attrValues = new String[] {domainName, password, "1", "0", "0", mailUser.getName(),
-						mailUser.getPhone(), mailUser.getGender(), cardIdNum, mailUser.getId(),
-						mailUser.getDepName()};
-				String attrs = Utils.encode(attrNames, attrValues);
-				APIContext ret =
-						client.createUser("1", "a", mailUser.getId(), attrs);
-				if (ret.getRetCode() == 0) {
-					successUsers.add(mailUser);
-					log.info("创建 {} 邮箱账号成功！", userAtDomain);
-				} else {
-					failedUsers.add(mailUser);
-					log.warn("创建 {} 邮箱账号失败，code: {}, msg: {}", userAtDomain, ret.getRetCode(),
-							ret.getErrorInfo());
-				}
+			List<MailUser> failedUsers, String type) throws Exception {
+		for (MailUser mailUser : mappedMailUsers) {
+			String userAtDomain = String.format("%s@mail.ynu.edu.cn", mailUser.getId());
+			if (type.equals("0")) {
+				userAtDomain = String.format("%s@ynu.edu.cn", mailUser.getId());
 			}
-		} catch (Exception e) {
-			System.out.println(e);
-		} finally {
-			if (client != null) {
-				client.close();
+			// createUser(providerId, orgId, userId, attrs)
+			// providerId 固定为"1"
+			// orgId 组织标识
+			// userId 用户名
+			// domainName 域名
+			// cosId 服务等级标识，缺省服务为"1"
+			// userStatus 用户状态，正常为"0"，停用为"1"，锁定为"4"
+			String domainName = type.equals("0") ? "ynu.edu.cn" : "mail.ynu.edu.cn";
+			String[] attrNames = new String[] {"domain_name", "password", "cos_id", "user_status",
+					"quota_delta", "true_name", "mobile_number", "gender", "address", "zipcode", "homepage"};
+			String cardIdNum = mailUser.getCardIdNum();
+			// 如果证件号为空或者证件号长度小于6（设置初始密码为证件号后六位,并且转换为小写）
+			if (StringUtils.isEmpty(cardIdNum) || cardIdNum.length() < 6) {
+				log.warn("创建 {} 邮箱账号失败，原始证件号是 {} 不满足预设条件", userAtDomain, cardIdNum);
+				failedUsers.add(mailUser);
+				continue;
+			}
+			String password = cardIdNum.substring(cardIdNum.length() - 6).toLowerCase();
+			String[] attrValues = new String[] {domainName, password, "1", "0", "0", mailUser.getName(),
+					mailUser.getPhone(), mailUser.getGender(), cardIdNum, mailUser.getId(),
+					mailUser.getDepName()};
+			String attrs = Utils.encode(attrNames, attrValues);
+			APIContext ret = coremailUtils.createUser("1", "a", mailUser.getId(), attrs);
+			if (ret.getRetCode() == 0) {
+				successUsers.add(mailUser);
+				log.info("创建 {} 邮箱账号成功！", userAtDomain);
+			} else {
+				failedUsers.add(mailUser);
+				log.warn("创建 {} 邮箱账号失败，code: {}, msg: {}", userAtDomain, ret.getRetCode(),
+						ret.getErrorInfo());
 			}
 		}
 	}
