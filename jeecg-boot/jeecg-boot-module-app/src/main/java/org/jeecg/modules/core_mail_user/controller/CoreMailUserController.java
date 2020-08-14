@@ -26,6 +26,7 @@ import org.jeecg.modules.core_mail_user.entity.CoreMailUser;
 import org.jeecg.modules.core_mail_user.service.ICoreMailUserService;
 import org.jeecg.modules.system.service.ISysDictService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -114,9 +115,23 @@ public class CoreMailUserController extends JeecgController<CoreMailUser, ICoreM
       List<String> userAtDomains = Arrays.stream(userList)
           .map(u -> String.format("%s@%s", u, domain)).collect(Collectors.toList());
       log.info("正在获取 {}/{} 组织的用户列表属性数据......", item.getKey(), item.getValue());
-      Map<String, Map<String, String>> attrs = coremailUtils.getAttrs(userAtDomains);
-      log.info("获取 {}/{} 组织的用户列表属性数据 {} 条", item.getKey(), item.getValue(), attrs.size());
-      allUserAttrs.putAll(attrs);
+      Map<String, Map<String, String>> attrsMap = coremailUtils.getAttrs(userAtDomains);
+      log.info("正在获取 {}/{} 组织的用户别名信息数据......", item.getKey(), item.getValue());
+      Map<String, String[]> aliasMap = coremailUtils.getSmtpAlias(userAtDomains);
+      // 合并alias,username信息至属性信息
+      for (Entry<String, Map<String, String>> attrItem : attrsMap.entrySet()) {
+        String userAtDomain = attrItem.getKey();
+        String[] alias = aliasMap.get(userAtDomain);
+        Map<String, String> attrsValue = attrItem.getValue();
+        if (alias != null) {
+          attrsValue.put("alias",
+              Arrays.stream(alias).map(fullAlias -> fullAlias.substring(0, fullAlias.indexOf("@")))
+                  .collect(Collectors.joining(",")));
+          attrsValue.put("username", userAtDomain.substring(0, userAtDomain.indexOf("@")));
+        }
+      }
+      log.info("获取 {}/{} 组织的用户列表属性数据 {} 条", item.getKey(), item.getValue(), attrsMap.size());
+      allUserAttrs.putAll(attrsMap);
     }
     log.info("正在转换组织用户列表数据......");
     Set<CoreMailUser> coreMailUserList = coremailUtils.convertToCoreMailUser(allUserAttrs);
@@ -205,15 +220,17 @@ public class CoreMailUserController extends JeecgController<CoreMailUser, ICoreM
   public Result<?> add(@RequestBody CoreMailUser coreMailUser) throws Exception {
     String userAtDomain = coreMailUser.getId();
     String id = userAtDomain.substring(0, userAtDomain.indexOf("@"));
+    String domain = userAtDomain.substring(userAtDomain.indexOf("@") + 1);
     // 这里的日期JSON序列化的时候不会参考Entity里的注解，无法正确处理
     Map<String, Object> attrMap =
         JSON.parseObject(JSON.toJSONStringWithDateFormat(coreMailUser, "yyyy-MM-dd"));
     // 删除非coremail属性
-    String[] nonCoremailAttrs =
-        new String[] {"id", "create_by", "create_time", "update_by", "update_time", "sys_org_code"};
+    String[] nonCoremailAttrs = new String[] {"id", "create_by", "create_time", "update_by",
+        "update_time", "sys_org_code", "alias", "username"};
     for (String nonCoremailAttr : nonCoremailAttrs) {
       attrMap.remove(nonCoremailAttr);
     }
+    // 创建账号
     String attrs = Utils.encode(attrMap);
     log.info("添加 {} 邮箱账号 attrs {}", id, attrs);
     APIContext ret = coremailUtils.createUser("1", "a", id, attrs);
@@ -221,11 +238,25 @@ public class CoreMailUserController extends JeecgController<CoreMailUser, ICoreM
       log.warn("添加邮箱账号 {} 失败，code: {}, msg: {}", id, ret.getRetCode(), ret.getErrorInfo());
       return Result.error(200, ret.getErrorInfo());
     }
-    // 重新获取coremail中的属性信息，转换为CoreMailUser，然后保存
+    // 添加别名
+    String alias = coreMailUser.getAlias();
+    if (!StringUtils.isEmpty(alias)) {
+      String[] aliasArray = alias.split(",");
+      for (String singleAlias : aliasArray) {
+        coremailUtils.addSmtpAlias(userAtDomain, String.format("%s@%s", singleAlias, domain));
+      }
+    }
+    // 重新获取coremail中的属性信息、别名信息，转换为CoreMailUser，然后保存
     Map<String, String> userAttrs = coremailUtils.getAttrs(userAtDomain);
+    String[] smtpAlias = coremailUtils.getSmtpAlias(userAtDomain);
     CoreMailUser newCoreMailUser =
         JSON.parseObject(JSON.toJSONString(userAttrs), CoreMailUser.class);
     newCoreMailUser.setId(userAtDomain);
+    newCoreMailUser.setUsername(id);
+    if (smtpAlias != null) {
+      newCoreMailUser.setAlias(Arrays.stream(smtpAlias)
+          .map(item -> item.substring(0, item.indexOf("@"))).collect(Collectors.joining(",")));
+    }
     log.info("添加邮箱账号 {} 成功！", id);
     coreMailUserService.save(newCoreMailUser);
     return Result.ok(String.format("添加邮箱账号 %s 成功！", id));
@@ -243,14 +274,17 @@ public class CoreMailUserController extends JeecgController<CoreMailUser, ICoreM
   @PutMapping(value = "/edit")
   public Result<?> edit(@RequestBody CoreMailUser coreMailUser) throws Exception {
     String userAtDomain = coreMailUser.getId();
+    String id = userAtDomain.substring(0, userAtDomain.indexOf("@"));
+    String domain = userAtDomain.substring(userAtDomain.indexOf("@") + 1);
     Map<String, Object> attrMap =
         JSON.parseObject(JSON.toJSONStringWithDateFormat(coreMailUser, "yyyy-MM-dd"));
     // 删除非coremail属性
-    String[] nonCoremailAttrs =
-        new String[] {"id", "create_by", "create_time", "update_by", "update_time", "sys_org_code"};
+    String[] nonCoremailAttrs = new String[] {"id", "create_by", "create_time", "update_by",
+        "update_time", "sys_org_code", "alias", "username"};
     for (String nonCoremailAttr : nonCoremailAttrs) {
       attrMap.remove(nonCoremailAttr);
     }
+    // 创建账号
     // domain_name 属性只可读，不可写，不能在更新属性中
     attrMap.remove("domain_name");
     // 如果密码字段为空，则不更新密码
@@ -265,11 +299,36 @@ public class CoreMailUserController extends JeecgController<CoreMailUser, ICoreM
           ret.getErrorInfo());
       return Result.error(200, ret.getErrorInfo());
     }
+    // 删除原别名，添加别名
+    String alias = coreMailUser.getAlias();
+    CoreMailUser originCoreMailUser = coreMailUserService.getById(userAtDomain);
+    String originAlias = originCoreMailUser.getAlias();
+    boolean changed = !alias.equals(originAlias);
+    if (changed && !StringUtils.isEmpty(originAlias)) {
+      log.info("删除 {} 的别名 {}", userAtDomain, originAlias);
+      String[] aliasArray = originAlias.split(",");
+      for (String singleAlias : aliasArray) {
+        coremailUtils.delSmtpAlias(userAtDomain, String.format("%s@%s", singleAlias, domain));
+      }
+    }
+    if (changed && !StringUtils.isEmpty(alias)) {
+      log.info("添加 {} 的别名 {}", userAtDomain, originAlias);
+      String[] aliasArray = alias.split(",");
+      for (String singleAlias : aliasArray) {
+        coremailUtils.addSmtpAlias(userAtDomain, String.format("%s@%s", singleAlias, domain));
+      }
+    }
     // 重新获取coremail中的属性信息，转换为CoreMailUser，然后更新
     Map<String, String> userAttrs = coremailUtils.getAttrs(userAtDomain);
+    String[] smtpAlias = coremailUtils.getSmtpAlias(userAtDomain);
     CoreMailUser newCoreMailUser =
         JSON.parseObject(JSON.toJSONString(userAttrs), CoreMailUser.class);
     newCoreMailUser.setId(userAtDomain);
+    newCoreMailUser.setUsername(id);
+    if (smtpAlias != null) {
+      newCoreMailUser.setAlias(Arrays.stream(smtpAlias)
+          .map(item -> item.substring(0, item.indexOf("@"))).collect(Collectors.joining(",")));
+    }
     log.info("更新邮箱账号 {} 成功！", userAtDomain);
     coreMailUserService.updateById(newCoreMailUser);
     return Result.ok(String.format("更新邮箱账号 %s 成功！", userAtDomain));
@@ -286,6 +345,13 @@ public class CoreMailUserController extends JeecgController<CoreMailUser, ICoreM
   @DeleteMapping(value = "/delete")
   public Result<?> delete(@RequestParam(name = "id", required = true) String id) {
     APIContext ret = coremailUtils.deleteUser(id);
+    // 删除别名
+    String[] smtpAlias = coremailUtils.getSmtpAlias(id);
+    if (smtpAlias != null) {
+      for (String alias : smtpAlias) {
+        coremailUtils.delSmtpAlias(id, alias);
+      }
+    }
     if (ret.getRetCode() != APIContext.RC_NORMAL) {
       log.warn("删除邮箱账号 {} 失败，code: {}, msg: {}", id, ret.getRetCode(), ret.getErrorInfo());
       return Result.error(200, ret.getErrorInfo());
@@ -311,6 +377,13 @@ public class CoreMailUserController extends JeecgController<CoreMailUser, ICoreM
     for (int i = 0; i < idList.size(); i++) {
       String id = idList.get(i);
       APIContext ret = coremailUtils.deleteUser(id);
+      // 删除别名
+      String[] smtpAlias = coremailUtils.getSmtpAlias(id);
+      if (smtpAlias != null) {
+        for (String alias : smtpAlias) {
+          coremailUtils.delSmtpAlias(id, alias);
+        }
+      }
       if (ret.getRetCode() != APIContext.RC_NORMAL) {
         log.warn("删除邮箱账号 {} 失败，code: {}, msg: {}", id, ret.getRetCode(), ret.getErrorInfo());
         failedList.add(id);

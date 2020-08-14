@@ -62,6 +62,98 @@ public class CoremailUtils {
     return null;
   }
 
+  public Map<String, String[]> getSmtpAlias(List<String> userAtDomains) {
+    Map<String, String[]> results = new HashMap<>();
+    IClient client = null;
+    try {
+      Socket socket = new Socket(endpointHost, endpointPort);
+      client = APIContext.getClient(socket);
+      for (String userAtDomain : userAtDomains) {
+        APIContext ret = client.getSmtpAlias(userAtDomain);
+        if (ret.getRetCode() != APIContext.RC_NORMAL) {
+          log.warn("获取用户别名信息 {} 失败，code: {}, msg: {}", userAtDomain, ret.getRetCode(),
+              ret.getErrorInfo());
+          continue;
+        }
+        String result = ret.getResult();
+        results.put(userAtDomain, result.equals("") ? new String[] {} : result.split(","));
+      }
+      return results;
+    } catch (Exception e) {
+      System.out.println(e);
+    } finally {
+      if (client != null) {
+        client.close();
+      }
+    }
+    return results;
+  }
+
+  public String[] getSmtpAlias(String userAtDomain) {
+    IClient client = null;
+    try {
+      Socket socket = new Socket(endpointHost, endpointPort);
+      client = APIContext.getClient(socket);
+      APIContext ret = client.getSmtpAlias(userAtDomain);
+      if (ret.getRetCode() != APIContext.RC_NORMAL) {
+        log.warn("获取用户别名信息 {} 失败，code: {}, msg: {}", userAtDomain, ret.getRetCode(),
+            ret.getErrorInfo());
+        return null;
+      }
+      String result = ret.getResult();
+      return result.equals("") ? new String[] {} : result.split(",");
+    } catch (Exception e) {
+      System.out.println(e);
+    } finally {
+      if (client != null) {
+        client.close();
+      }
+    }
+    return null;
+  }
+
+  public APIContext addSmtpAlias(String userAtDomain, String aliasUserAtDomain) {
+    IClient client = null;
+    try {
+      Socket socket = new Socket(endpointHost, endpointPort);
+      client = APIContext.getClient(socket);
+      APIContext ret = client.addSmtpAlias(userAtDomain, aliasUserAtDomain);
+      if (ret.getRetCode() != APIContext.RC_NORMAL) {
+        log.warn("添加邮箱别名 {} for {} 失败，code: {}, msg: {}", aliasUserAtDomain, userAtDomain,
+            ret.getRetCode(), ret.getErrorInfo());
+      }
+      return ret;
+    } catch (Exception e) {
+      System.out.println(e);
+    } finally {
+      if (client != null) {
+        client.close();
+      }
+    }
+    return null;
+  }
+
+  public APIContext delSmtpAlias(String userAtDomain, String aliasUserAtDomain) {
+    IClient client = null;
+    try {
+      Socket socket = new Socket(endpointHost, endpointPort);
+      client = APIContext.getClient(socket);
+      APIContext ret = client.delSmtpAlias(userAtDomain, aliasUserAtDomain);
+      if (ret.getRetCode() != APIContext.RC_NORMAL) {
+        log.warn("添加邮箱别名 {} for {} 失败，code: {}, msg: {}", aliasUserAtDomain, userAtDomain,
+            ret.getRetCode(), ret.getErrorInfo());
+      }
+      return ret;
+    } catch (Exception e) {
+      System.out.println(e);
+    } finally {
+      if (client != null) {
+        client.close();
+      }
+    }
+    return null;
+  }
+
   public Map<String, Map<String, String>> getAttrs(List<String> userAtDomains) {
     Map<String, Map<String, String>> results = new HashMap<>();
     IClient client = null;
@@ -85,7 +177,7 @@ public class CoremailUtils {
               ret.getErrorInfo());
           continue;
         }
-        log.info("邮箱账号属性信息: {}", ret.getResult());
+        // log.info("邮箱账号属性信息: {}", ret.getResult());
         results.put(userAtDomain, Utils.decode(ret.getResult()));
       }
       return results;

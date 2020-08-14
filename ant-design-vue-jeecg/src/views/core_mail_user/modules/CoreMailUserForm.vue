@@ -79,6 +79,11 @@
                   <a-input v-decorator="['mobileNumber']" placeholder="请输入手机号码"></a-input>
                 </a-form-item>
               </a-col>
+              <a-col :span="12">
+                <a-form-item label="别名" :labelCol="labelCol" :wrapperCol="wrapperCol">
+                  <a-input v-decorator="['alias']" placeholder="请输入别名"></a-input>
+                </a-form-item>
+              </a-col>
             </a-row>
           </a-collapse-panel>
           <a-collapse-panel key="2" header="更多信息">
@@ -423,7 +428,9 @@ export default {
             'duty',
             'remarks',
             'orgUnitFullname',
-            'loginIpRange'
+            'loginIpRange',
+            'alias',
+            'username'
           ),
           password: '',
         })
@@ -513,7 +520,9 @@ export default {
           'duty',
           'remarks',
           'orgUnitFullname',
-          'loginIpRange'
+          'loginIpRange',
+          'alias',
+          'username'
         )
       )
     },

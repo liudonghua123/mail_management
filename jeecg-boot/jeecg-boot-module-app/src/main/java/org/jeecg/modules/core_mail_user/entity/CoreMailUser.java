@@ -222,6 +222,14 @@ public class CoreMailUser implements Serializable {
 	@Excel(name = "IP绑定", width = 15)
     @ApiModelProperty(value = "IP绑定")
     private java.lang.String loginIpRange;
+	/**别名*/
+	@Excel(name = "别名", width = 15)
+    @ApiModelProperty(value = "别名")
+    private java.lang.String alias = "";
+	/**邮箱名称*/
+	@Excel(name = "邮箱名称", width = 15)
+    @ApiModelProperty(value = "邮箱名称")
+    private java.lang.String username;
 
     
 }

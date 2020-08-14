@@ -5,8 +5,13 @@
       <a-form layout="inline" @keyup.enter.native="searchQuery">
         <a-row :gutter="24">
           <a-col :xl="6" :lg="7" :md="8" :sm="24">
-            <a-form-item label="账号">
-              <a-input placeholder="请输入账号" v-model="queryParam.id"></a-input>
+            <a-form-item label="账号名称">
+              <a-input placeholder="请输入账号名称" v-model="queryParam.username"></a-input>
+            </a-form-item>
+          </a-col>
+          <a-col :xl="6" :lg="7" :md="8" :sm="24">
+            <a-form-item label="账号别名">
+              <a-input placeholder="请输入账号别名" v-model="queryParam.alias"></a-input>
             </a-form-item>
           </a-col>
           <a-col :xl="6" :lg="7" :md="8" :sm="24">
@@ -472,6 +477,16 @@
             title:'IP绑定',
             align:"center",
             dataIndex: 'loginIpRange'
+          },
+          {
+            title:'别名',
+            align:"center",
+            dataIndex: 'alias'
+          },
+          {
+            title:'邮箱账号',
+            align:"center",
+            dataIndex: 'username'
           },
           {
             title: '操作',
