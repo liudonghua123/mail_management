@@ -13,7 +13,8 @@ import java.util.stream.IntStream;
 
 public class Utils {
 
-  private static SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+  public static SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+  public static SimpleDateFormat commonDateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 
   public static <T> String encode(Map<String, T> requestParams) throws Exception {
     return requestParams.entrySet().stream().filter(item -> item.getValue() != null)

@@ -69,12 +69,6 @@ public class MailUserController extends JeecgController<MailUser, IMailUserServi
 	@Autowired
 	private CoremailUtils coremailUtils;
 
-
-	@Value("${coremail.endpointHost}")
-	String endpointHost;
-	@Value("${coremail.endpointPort}")
-	int endpointPort;
-
 	/**
 	 * 分页列表查询
 	 *
