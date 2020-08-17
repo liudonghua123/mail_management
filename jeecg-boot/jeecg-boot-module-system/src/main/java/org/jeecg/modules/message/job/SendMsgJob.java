@@ -7,6 +7,7 @@ import org.jeecg.modules.message.entity.SysMessage;
 import org.jeecg.modules.message.handle.ISendMsgHandle;
 import org.jeecg.modules.message.handle.enums.SendMsgStatusEnum;
 import org.jeecg.modules.message.handle.enums.SendMsgTypeEnum;
+import org.jeecg.modules.message.handle.impl.PushPlusSendMsgHandle;
 import org.jeecg.modules.message.service.ISysMessageService;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
@@ -26,6 +27,9 @@ public class SendMsgJob implements Job {
 
 	@Autowired
 	private ISysMessageService sysMessageService;
+
+	@Autowired
+	private PushPlusSendMsgHandle pushPlusSendMsgHandle;
 
 	@Override
 	public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
@@ -48,6 +52,8 @@ public class SendMsgJob implements Job {
 					sendMsgHandle = (ISendMsgHandle) Class.forName(SendMsgTypeEnum.SMS.getImplClass()).newInstance();
 				} else if (sysMessage.getEsType().equals(SendMsgTypeEnum.WX.getType())) {
 					sendMsgHandle = (ISendMsgHandle) Class.forName(SendMsgTypeEnum.WX.getImplClass()).newInstance();
+				} else if (sysMessage.getEsType().equals(SendMsgTypeEnum.PUSHPLUS.getType())) {
+					sendMsgHandle = pushPlusSendMsgHandle;
 				}
 			} catch (Exception e) {
 				log.error(e.getMessage(),e);

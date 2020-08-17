@@ -10,7 +10,8 @@ public enum SendMsgTypeEnum {
 //推送方式：1短信 2邮件 3微信
 	SMS("1", "org.jeecg.modules.message.handle.impl.SmsSendMsgHandle"),
 	EMAIL("2", "org.jeecg.modules.message.handle.impl.EmailSendMsgHandle"),
-	WX("3","org.jeecg.modules.message.handle.impl.WxSendMsgHandle");
+	WX("3","org.jeecg.modules.message.handle.impl.WxSendMsgHandle"),
+	PUSHPLUS("4", "org.jeecg.modules.message.handle.impl.PushPlusSendMsgHandle");
 
 	private String type;
 

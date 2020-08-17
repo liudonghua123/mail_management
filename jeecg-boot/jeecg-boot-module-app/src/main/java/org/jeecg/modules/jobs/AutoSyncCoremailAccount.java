@@ -181,6 +181,8 @@ public class AutoSyncCoremailAccount implements Job {
       log.info("正在发送邮件 {}({}) ......", item.getKey(), item.getValue());
       pushMsgUtil.sendMessage("2", "coremail_account_async", data, item.getKey());
     }
+    // 通过 pushplus 发送微信通知信息
+    pushMsgUtil.sendMessage("4", "coremail_account_async_pushplus", data, "");
   }
 
 }
