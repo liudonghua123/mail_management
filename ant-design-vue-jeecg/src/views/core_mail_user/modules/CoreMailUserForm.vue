@@ -17,7 +17,12 @@
               </a-col>
               <a-col :span="12">
                 <a-form-item label="密码" :labelCol="labelCol" :wrapperCol="wrapperCol">
-                  <a-input v-decorator="['password']" placeholder="请输入密码"></a-input>
+                  <a-col :span="16">
+                    <a-input v-decorator="['password']" placeholder="请输入密码"></a-input>
+                  </a-col>
+                  <a-col :offset="2" :span="6">
+                    <a-button type="primary" @click="extractPassword">设置初始密码</a-button>
+                  </a-col>
                 </a-form-item>
               </a-col>
               <a-col :span="12">
@@ -84,15 +89,15 @@
                   <a-input v-decorator="['alias']" placeholder="请输入别名"></a-input>
                 </a-form-item>
               </a-col>
-            </a-row>
-          </a-collapse-panel>
-          <a-collapse-panel key="2" header="更多信息">
-            <a-row>
               <a-col :span="12">
                 <a-form-item label="身份证号" :labelCol="labelCol" :wrapperCol="wrapperCol">
                   <a-input v-decorator="['address']" placeholder="请输入身份证号"></a-input>
                 </a-form-item>
               </a-col>
+            </a-row>
+          </a-collapse-panel>
+          <a-collapse-panel key="2" header="更多信息">
+            <a-row>
               <a-col :span="12">
                 <a-form-item label="工号(学号)" :labelCol="labelCol" :wrapperCol="wrapperCol">
                   <a-input v-decorator="['zipcode']" placeholder="请输入工号(学号)"></a-input>
@@ -378,6 +383,19 @@ export default {
     this.showFlowData()
   },
   methods: {
+    extractPassword() {
+      const cardIdNum = this.form.getFieldValue('address') || ''
+      if(!cardIdNum) {
+        return this.$message.error(`请输入证件号!`)
+      }
+      if(cardIdNum.length < 6) {
+        return this.$message.warn(`证件号不正确!`)
+      }
+      this.form.setFieldsValue({
+        password: cardIdNum.substr(-6).toLowerCase()
+      })
+      this.$message.success(`密码已设置为证件号小写后六位!`)
+    },
     add() {
       this.edit({})
       this.editMode = false
