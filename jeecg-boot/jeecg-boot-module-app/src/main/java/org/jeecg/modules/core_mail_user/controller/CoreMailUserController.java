@@ -396,6 +396,67 @@ public class CoreMailUserController extends JeecgController<CoreMailUser, ICoreM
     return Result.ok("批量删除成功!", new BatchResponse<String>(successList, failedList));
   }
 
+  /**
+   * 通过 userAtDomain 验证账号是否存在
+   *
+   * @param id
+   * @return
+   */
+  @AutoLog(value = "coremail用户-验证账号是否存在")
+  @ApiOperation(value = "coremail用户-验证账号是否存在", notes = "coremail用户-验证账号是否存在")
+  @GetMapping(value = "/userExist")
+  public Result<?> userExist(
+      @RequestParam(name = "userAtDomain", required = true) String userAtDomain) {
+    APIContext ret = coremailUtils.userExist(userAtDomain);
+    if (ret.getRetCode() != APIContext.RC_NORMAL) {
+      log.warn("验证账号是否存在 {} 失败，code: {}, msg: {}", userAtDomain, ret.getRetCode(),
+          ret.getErrorInfo());
+      return Result.error(200, ret.getErrorInfo());
+    }
+    return Result.ok(String.format("验证账号是否存在 %s 成功！", userAtDomain), ret.getRetCode());
+  }
+
+  /**
+   * 通过 userAtDomain,password 验证账号密码是否正确
+   *
+   * @param userAtDomain
+   * @param password
+   * @return
+   */
+  @AutoLog(value = "coremail用户-验证账号密码是否正确")
+  @ApiOperation(value = "coremail用户-验证账号密码是否正确", notes = "coremail用户-验证账号密码是否正确")
+  @GetMapping(value = "/authenticate")
+  public Result<?> authenticate(
+      @RequestParam(name = "userAtDomain", required = true) String userAtDomain,
+      @RequestParam(name = "password", required = true) String password) {
+    APIContext ret = coremailUtils.authenticate(userAtDomain, password);
+    if (ret.getRetCode() != APIContext.RC_NORMAL) {
+      log.warn("验证账号密码是否正确 {} 失败，code: {}, msg: {}", userAtDomain, ret.getRetCode(),
+          ret.getErrorInfo());
+      return Result.error(200, ret.getErrorInfo());
+    }
+    return Result.ok(String.format("验证账号密码是否正确 %s 成功！", userAtDomain), ret.getRetCode());
+  }
+
+  /**
+   * 通过 userAtDomain 获取用户属性信息
+   *
+   * @param id
+   * @return
+   */
+  @AutoLog(value = "coremail用户-获取用户属性信息")
+  @ApiOperation(value = "coremail用户-获取用户属性信息", notes = "coremail用户-获取用户属性信息")
+  @GetMapping(value = "/getAttrs")
+  public Result<?> getAttrs(
+      @RequestParam(name = "userAtDomain", required = true) String userAtDomain) {
+    Map<String, String> attrs = coremailUtils.getAttrs(userAtDomain);
+    if (attrs == null) {
+      log.warn("获取用户属性信息 {} 失败", userAtDomain);
+      return Result.error(200, String.format("获取用户 %s 属性信息失败", userAtDomain));
+    }
+    return Result.ok(String.format("获取用户 %s 属性信息成功！", userAtDomain), attrs);
+  }
+
   @Data
   @NoArgsConstructor
   @AllArgsConstructor

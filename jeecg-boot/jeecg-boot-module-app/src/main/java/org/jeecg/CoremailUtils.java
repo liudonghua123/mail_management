@@ -32,9 +32,12 @@ public class CoremailUtils {
       String userAtDomain = userAttrsMap.getKey();
       Map<String, String> userAttrs = userAttrsMap.getValue();
       // String id = userAtDomain.substring(0, userAtDomain.indexOf("@"));
+      String domain = userAtDomain.substring(userAtDomain.indexOf("@") + 1);
       CoreMailUser coreMailUser =
           JSON.parseObject(JSON.toJSONString(userAttrs), CoreMailUser.class);
       coreMailUser.setId(userAtDomain);
+      // 更新 domain 信息
+      coreMailUser.setDomainName(domain);
       coreMailUserList.add(coreMailUser);
     }
     return coreMailUserList;
@@ -208,11 +211,11 @@ public class CoremailUtils {
       String attrs = Utils.encode(attrNames, attrValues);
       APIContext ret = client.getAttrs(userAtDomain, attrs);
       if (ret.getRetCode() != APIContext.RC_NORMAL) {
-        log.warn("获取邮箱账号属性信息 {} 失败，code: {}, msg: {}", userAtDomain, ret.getRetCode(),
+        log.warn("获取邮箱账号 {} 属性信息失败，code: {}, msg: {}", userAtDomain, ret.getRetCode(),
             ret.getErrorInfo());
         return null;
       }
-      log.info("邮箱账号属性信息: {}", ret.getResult());
+      log.info("邮箱账号 {} 属性信息: ", ret.getResult());
       return Utils.decode(ret.getResult());
     } catch (Exception e) {
       System.out.println(e);
@@ -272,7 +275,49 @@ public class CoremailUtils {
       client = APIContext.getClient(socket);
       APIContext ret = client.deleteUser(id);
       if (ret.getRetCode() != APIContext.RC_NORMAL) {
-        log.warn("更新邮箱账号 {} 失败，code: {}, msg: {}", id, ret.getRetCode(), ret.getErrorInfo());
+        log.warn("删除邮箱账号 {} 失败，code: {}, msg: {}", id, ret.getRetCode(), ret.getErrorInfo());
+      }
+      return ret;
+    } catch (Exception e) {
+      System.out.println(e);
+    } finally {
+      if (client != null) {
+        client.close();
+      }
+    }
+    return null;
+  }
+
+  public APIContext userExist(String userAtDomain) {
+    IClient client = null;
+    try {
+      Socket socket = new Socket(endpointHost, endpointPort);
+      client = APIContext.getClient(socket);
+      APIContext ret = client.userExist(userAtDomain);
+      if (ret.getRetCode() != APIContext.RC_NORMAL) {
+        log.warn("验证邮箱账号 {} 是否存在失败，code: {}, msg: {}", userAtDomain, ret.getRetCode(),
+            ret.getErrorInfo());
+      }
+      return ret;
+    } catch (Exception e) {
+      System.out.println(e);
+    } finally {
+      if (client != null) {
+        client.close();
+      }
+    }
+    return null;
+  }
+
+  public APIContext authenticate(String userAtDomain, String password) {
+    IClient client = null;
+    try {
+      Socket socket = new Socket(endpointHost, endpointPort);
+      client = APIContext.getClient(socket);
+      APIContext ret = client.authenticate(userAtDomain, password);
+      if (ret.getRetCode() != APIContext.RC_NORMAL) {
+        log.warn("验证邮箱账号密码 {} 失败，code: {}, msg: {}", userAtDomain, ret.getRetCode(),
+            ret.getErrorInfo());
       }
       return ret;
     } catch (Exception e) {
