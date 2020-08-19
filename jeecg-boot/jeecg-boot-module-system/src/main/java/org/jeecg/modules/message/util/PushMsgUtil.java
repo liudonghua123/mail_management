@@ -52,11 +52,14 @@ public class PushMsgUtil {
             String title = sysSmsTemplate.getTemplateName();
             // 模板内容
             String content = sysSmsTemplate.getTemplateContent();
-            StringWriter stringWriter = new StringWriter();
+            StringWriter swTitle = new StringWriter();
+            StringWriter swContent = new StringWriter();
             Template template = null;
             try {
                 template = new Template("SysMessageTemplate", content, freemarkerConfig);
-                template.process(map, stringWriter);
+                template.process(map, swContent);
+                template = new Template("SysMessageTitleTemplate", title, freemarkerConfig);
+                template.process(map, swTitle);
             } catch (IOException e) {
                 e.printStackTrace();
                 return false;
@@ -64,7 +67,8 @@ public class PushMsgUtil {
                 e.printStackTrace();
                 return false;
             }
-            content = stringWriter.toString();
+            content = swContent.toString();
+            title = swTitle.toString();
             sysMessage.setEsTitle(title);
             sysMessage.setEsContent(content);
             sysMessage.setEsParam(JSONObject.toJSONString(map));
