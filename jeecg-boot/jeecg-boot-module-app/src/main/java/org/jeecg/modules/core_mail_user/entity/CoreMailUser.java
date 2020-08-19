@@ -97,6 +97,11 @@ public class CoreMailUser implements Serializable {
     @DateTimeFormat(pattern="yyyy-MM-dd")
     @ApiModelProperty(value = "用户过期日")
     private java.util.Date userExpiryDate;
+	/**用户组织id*/
+	@Excel(name = "用户组织id", width = 15, dicCode = "coremail_org_names")
+	@Dict(dicCode = "coremail_org_names")
+    @ApiModelProperty(value = "用户组织id")
+    private java.lang.String orgId;
 	/**用户部门id*/
 	@Excel(name = "用户部门id", width = 15, dicCode = "coremail_org_names")
 	@Dict(dicCode = "coremail_org_names")

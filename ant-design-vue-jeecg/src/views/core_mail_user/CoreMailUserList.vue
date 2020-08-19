@@ -34,6 +34,24 @@
           </a-col>
           <template v-if="toggleSearchStatus">
             <a-col :xl="6" :lg="7" :md="8" :sm="24">
+              <a-form-item label="组织">
+                <j-dict-select-tag
+                  placeholder="请选择组织"
+                  v-model="queryParam.orgId"
+                  dictCode="coremail_org_names"
+                />
+              </a-form-item>
+            </a-col>
+            <a-col :xl="6" :lg="7" :md="8" :sm="24">
+              <a-form-item label="部门">
+                <j-dict-select-tag
+                  placeholder="请选择部门"
+                  v-model="queryParam.orgUnitId"
+                  dictCode="coremail_org_names"
+                />
+              </a-form-item>
+            </a-col>
+            <a-col :xl="6" :lg="7" :md="8" :sm="24">
               <a-form-item label="真实姓名">
                 <a-input placeholder="请输入真实姓名" v-model="queryParam.trueName"></a-input>
               </a-form-item>
@@ -414,6 +432,11 @@ export default {
         },
         {
           title: '邮箱组织',
+          align: 'center',
+          dataIndex: 'orgId_dictText',
+        },
+        {
+          title: '邮箱部门',
           align: 'center',
           dataIndex: 'orgUnitId_dictText',
         },

@@ -62,10 +62,21 @@
                 <a-form-item label="邮箱组织" :labelCol="labelCol" :wrapperCol="wrapperCol">
                   <j-dict-select-tag
                     type="list"
-                    v-decorator="['orgUnitId']"
+                    v-decorator="['orgId']"
                     :trigger-change="true"
                     dictCode="coremail_org_names"
                     placeholder="请选择邮箱组织"
+                  />
+                </a-form-item>
+              </a-col>
+              <a-col :span="12">
+                <a-form-item label="邮箱部门" :labelCol="labelCol" :wrapperCol="wrapperCol">
+                  <j-dict-select-tag
+                    type="list"
+                    v-decorator="['orgUnitId']"
+                    :trigger-change="true"
+                    dictCode="coremail_org_names"
+                    placeholder="请选择邮箱部门"
                   />
                 </a-form-item>
               </a-col>
@@ -417,6 +428,7 @@ export default {
             'quotaDelta',
             'nfQuotaDelta',
             'userExpiryDate',
+            'orgId',
             'orgUnitId',
             'password',
             'forwarddes',
@@ -509,6 +521,7 @@ export default {
           'quotaDelta',
           'nfQuotaDelta',
           'userExpiryDate',
+          'orgId',
           'orgUnitId',
           'password',
           'forwarddes',

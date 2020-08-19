@@ -169,7 +169,7 @@ public class CoremailUtils {
           "pwd_hint_question", "pwd_hint_answer", "true_name", "nick_name", "mobile_number",
           "home_phone", "company_phone", "fax_number", "gender", "province", "city", "birthday",
           "address", "zipcode", "homepage", "country", "anniversary", "reg_ip", "duty", "remarks",
-          "org_unit_fullName", "login_ip_range"};
+          "org_unit_fullName", "login_ip_range", "org_id"};
       String[] attrValues =
           IntStream.range(0, attrNames.length).mapToObj(i -> "").toArray(x -> new String[x]);
       String attrs = Utils.encode(attrNames, attrValues);
@@ -205,7 +205,7 @@ public class CoremailUtils {
           "pwd_hint_question", "pwd_hint_answer", "true_name", "nick_name", "mobile_number",
           "home_phone", "company_phone", "fax_number", "gender", "province", "city", "birthday",
           "address", "zipcode", "homepage", "country", "anniversary", "reg_ip", "duty", "remarks",
-          "org_unit_fullName", "login_ip_range"};
+          "org_unit_fullName", "login_ip_range", "org_id"};
       String[] attrValues =
           IntStream.range(0, attrNames.length).mapToObj(i -> "").toArray(x -> new String[x]);
       String attrs = Utils.encode(attrNames, attrValues);
