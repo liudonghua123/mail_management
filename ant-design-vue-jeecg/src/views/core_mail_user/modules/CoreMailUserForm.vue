@@ -7,12 +7,7 @@
             <a-row>
               <a-col :span="12">
                 <a-form-item label="账号" :labelCol="labelCol" :wrapperCol="wrapperCol">
-                  <a-input-number
-                    :disabled="editMode"
-                    v-decorator="['id']"
-                    placeholder="请输入邮箱账号，例如 lily@ynu.edu.cn"
-                    style="width: 100%"
-                  />
+                  <a-input v-decorator="['id', {rules: [{ required: true, type: 'email', message: '请输入邮箱地址' }], validateTrigger: ['change', 'blur']}]" placeholder="请输入邮箱账号，例如 lily@ynu.edu.cn"></a-input>
                 </a-form-item>
               </a-col>
               <a-col :span="12">
