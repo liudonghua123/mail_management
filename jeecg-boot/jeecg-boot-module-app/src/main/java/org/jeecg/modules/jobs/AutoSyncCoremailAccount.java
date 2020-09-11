@@ -128,9 +128,8 @@ public class AutoSyncCoremailAccount implements Job {
       String cardIdNum = mailUser.getCardIdNum();
       // 如果证件号为空或者证件号长度小于6（设置初始密码为证件号后六位,并且转换为小写）
       if (StringUtils.isEmpty(cardIdNum) || cardIdNum.length() < 6) {
-        log.warn("创建 {} 邮箱账号失败，原始证件号是 {} 不满足预设条件", userAtDomain, cardIdNum);
-        failedUsers.add(mailUser);
-        continue;
+        log.warn("创建 {} 邮箱账号使用原始证件号后六位失败，原始证件号是 {}，使用学工号代替", userAtDomain, cardIdNum);
+        cardIdNum = mailUser.getId();
       }
       String password = cardIdNum.substring(cardIdNum.length() - 6).toLowerCase();
       String[] attrValues = new String[] {domainName, password, "1", "0", "0", mailUser.getName(),
@@ -143,17 +142,20 @@ public class AutoSyncCoremailAccount implements Job {
         e.printStackTrace();
       }
       APIContext ret = coremailUtils.createUser("1", "a", mailUser.getId(), attrs);
-      if (ret.getRetCode() == 0) {
+      if (ret.getRetCode() == APIContext.RC_NORMAL) {
         successUsers.add(mailUser);
         log.info("创建 {} 邮箱账号成功！", userAtDomain);
+      } else if (ret.getRetCode() == APIContext.RC_USER_EXIST) {
+        successUsers.add(mailUser);
+        log.info("邮箱账号 {} 已存在，加入成功列表中更新本地数据库！", userAtDomain);
       } else {
         failedUsers.add(mailUser);
         log.warn("创建 {} 邮箱账号失败，code: {}, msg: {}", userAtDomain, ret.getRetCode(),
             ret.getErrorInfo());
       }
     }
-    log.info("成功创建增用户 {} ", successUsers.size());
-    log.info("失败创建增用户 {} ", failedUsers.size());
+    log.info("成功创建用户数 {} ", successUsers.size());
+    log.info("失败创建用户数 {} ", failedUsers.size());
     // 保存成功创建的MailUsers
     log.info("正在保存 MailUsers......");
     mailUserService.saveBatch(successUsers);
